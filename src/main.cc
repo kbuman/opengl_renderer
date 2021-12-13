@@ -1,301 +1,169 @@
-#include <cstdio>
-#include <GL/glew.h>
-#include <GLFW/glfw3.h>
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <sstream>
 
-#include "common/shader.h"
+#include "renderer/renderer.h"
+#include "buffer/vertex_buffer.h"
+#include "buffer/index_buffer.h"
 
-bool initialize(GLFWwindow *&window) {
-  if (!glfwInit()) {
-    fprintf(stderr, "Failed to initialize GLFW\n");
-    getchar();
-    return false;
-  }
+struct ShaderProgramSource {
+  std::string VertexSource;
+  std::string FragmentSource;
+};
 
-  glfwWindowHint(GLFW_SAMPLES, 4);
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-  glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); // To make MacOS happy; should not be needed
-  glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+static ShaderProgramSource ParseShader(const std::string &fp) {
+  std::ifstream stream(fp);
 
-  // Open a window and create its OpenGL context
-  window = glfwCreateWindow(1024, 768, "Lab 1 - Week 1", NULL, NULL);
-  if (window==NULL) {
-    fprintf(stderr,
-            "Failed to open GLFW window. If you have an Intel GPU, they are not 3.3 compatible. Try the 2.1 version of the tutorials.\n");
-    getchar();
-    glfwTerminate();
-    return false;
-  }
-  glfwMakeContextCurrent(window);
-
-  // Initialize GLEW
-  glewExperimental = true; // Needed for core profile
-  if (glewInit()!=GLEW_OK) {
-    fprintf(stderr, "Failed to initialize GLEW\n");
-    getchar();
-    glfwTerminate();
-    return false;
-  }
-
-  // Ensure we can capture the escape key being pressed below
-  glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
-
-  // Dark blue background
-  glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-
-  return true;
-}
-
-int main(void) {
-  GLFWwindow *window;
-  if (!initialize(window)) {
-    return -1;
-  }
-  // Enable depth test
-  glEnable(GL_DEPTH_TEST);
-  // Accept fragment if it closer to the camera than the former one
-  glDepthFunc(GL_LESS);
-  glEnable(GL_CULL_FACE);
-
-  GLuint VertexArrayID;
-  glGenVertexArrays(1, &VertexArrayID);
-  glBindVertexArray(VertexArrayID);
-
-  // Create and compile our GLSL program from the shaders
-  GLuint programID = LoadShaders("TransformVertexShader.vertexshader", "ColorFragmentShader.fragmentshader");
-
-  // Get a handle for our "MVP" uniform
-  GLuint MatrixID = glGetUniformLocation(programID, "MVP");
-
-  // Projection matrix : 45° Field of View, 4:3 ratio, display range : 0.1 unit <-> 100 units
-  glm::mat4 Projection = glm::perspective(glm::radians(45.0f), 4.0f/3.0f, 0.1f, 100.0f);
-  // Camera matrix
-  glm::mat4 View = glm::lookAt(
-      glm::vec3(0, 0, -20), // Camera is at (4,3,-3), in World Space
-      glm::vec3(0, 0, 0), // and looks at the origin
-      glm::vec3(0, 1, 0)  // Head is up (set to 0,-1,0 to look upside-down)
-  );
-  // Cube1 matrix : an identity matrix (model will be at the origin)
-  glm::mat4 Cube1 = glm::translate(glm::mat4{1.0f}, glm::vec3{-5, 0, 0});
-  glm::mat4 Cube2 = glm::translate(glm::mat4{1.0f}, glm::vec3{0, 0, 0});
-  glm::mat4 Cube3 = glm::translate(glm::mat4{1.0f}, glm::vec3{5, 0, 0});
-  auto rotation1 = glm::vec3{((float)rand()/RAND_MAX)*3, ((float)rand()/RAND_MAX)*3, ((float)rand()/RAND_MAX)*3};
-  auto rotation2 = glm::vec3{((float)rand()/RAND_MAX)*3, ((float)rand()/RAND_MAX)*3, ((float)rand()/RAND_MAX)*3};
-  auto rotation3 = glm::vec3{((float)rand()/RAND_MAX)*3, ((float)rand()/RAND_MAX)*3, ((float)rand()/RAND_MAX)*3};
-
-  // Our vertices. Three consecutive floats give a 3D vertex; Three consecutive vertices give a triangle.
-  // A cube has 6 faces with 2 triangles each, so this makes 6*2=12 triangles, and 12*3 vertices
-  static const GLfloat g_vertex_buffer_data[] = {
-      -1.0f,-1.0f,-1.0f, // triangle 1 : begin
-      -1.0f,-1.0f, 1.0f,
-      -1.0f, 1.0f, 1.0f, // triangle 1 : end
-      1.0f, 1.0f,-1.0f, // triangle 2 : begin
-      -1.0f,-1.0f,-1.0f,
-      -1.0f, 1.0f,-1.0f, // triangle 2 : end
-      1.0f,-1.0f, 1.0f,
-      -1.0f,-1.0f,-1.0f,
-      1.0f,-1.0f,-1.0f,
-      1.0f, 1.0f,-1.0f,
-      1.0f,-1.0f,-1.0f,
-      -1.0f,-1.0f,-1.0f,
-      -1.0f,-1.0f,-1.0f,
-      -1.0f, 1.0f, 1.0f,
-      -1.0f, 1.0f,-1.0f,
-      1.0f,-1.0f, 1.0f,
-      -1.0f,-1.0f, 1.0f,
-      -1.0f,-1.0f,-1.0f,
-      -1.0f, 1.0f, 1.0f,
-      -1.0f,-1.0f, 1.0f,
-      1.0f,-1.0f, 1.0f,
-      1.0f, 1.0f, 1.0f,
-      1.0f,-1.0f,-1.0f,
-      1.0f, 1.0f,-1.0f,
-      1.0f,-1.0f,-1.0f,
-      1.0f, 1.0f, 1.0f,
-      1.0f,-1.0f, 1.0f,
-      1.0f, 1.0f, 1.0f,
-      1.0f, 1.0f,-1.0f,
-      -1.0f, 1.0f,-1.0f,
-      1.0f, 1.0f, 1.0f,
-      -1.0f, 1.0f,-1.0f,
-      -1.0f, 1.0f, 1.0f,
-      1.0f, 1.0f, 1.0f,
-      -1.0f, 1.0f, 1.0f,
-      1.0f,-1.0f, 1.0f
+  enum class ShaderType {
+    NONE = -1, VERTEX = 0, FRAGMENT = 1
   };
 
-  const size_t	verticesCount = sizeof(g_vertex_buffer_data) / sizeof(float);
-  GLfloat			g_color_buffer_data[verticesCount];
+  std::string line;
+  std::stringstream ss[2];
+  ShaderType type = ShaderType::NONE;
 
-  for (int i = 0; i < verticesCount; ++i) {
-    g_color_buffer_data[i] = (g_vertex_buffer_data[i] + 1.0f) / 2.0f;
+  while (std::getline(stream, line)) {
+    if (line.find("#shader")!=std::string::npos) {
+      if (line.find("vertex")!=std::string::npos) {
+        type = ShaderType::VERTEX;
+      } else if (line.find("fragment")!=std::string::npos) {
+        type = ShaderType::FRAGMENT;
+
+      }
+    } else {
+      ss[(int) type] << line << "\n";
+    }
   }
 
-  // One color for each vertex. They were generated randomly.
-//  static const GLfloat g_color_buffer_data[] = {
-//      1.0f, 0.0f, 1.0f, // triangle 1 : begin
-//      0.0f, 1.0f, 1.0f,
-//      0.0f, 1.0f, 0.0f, // triangle 1 : end
-//      0.0f, 0.0f, 1.0f, // triangle 2 : begin
-//      1.0f, 0.0f, 1.0f,
-//      1.0f, 0.0f, 0.0f, // triangle 2 : end
-//      1.0f, 1.0f, 1.0f,
-//      1.0f, 0.0f, 1.0f,
-//      0.0f, 1.0f, 1.0f,
-//      0.0f, 0.0f, 1.0f,
-//      0.0f, 1.0f, 1.0f,
-//      1.0f, 0.0f, 1.0f,
-//      1.0f, 0.0f, 1.0f,
-//      0.0f, 1.0f, 0.0f,
-//      1.0f, 0.0f, 0.0f,
-//      1.0f, 1.0f, 1.0f,
-//      0.0f, 1.0f, 1.0f,
-//      1.0f, 0.0f, 1.0f,
-//      0.0f, 1.0f, 0.0f,
-//      0.0f, 1.0f, 1.0f,
-//      1.0f, 1.0f, 1.0f,
-//      0.0f, 0.0f, 1.0f,
-//      0.0f, 1.0f, 1.0f,
-//      0.0f, 0.0f, 1.0f,
-//      0.0f, 1.0f, 1.0f,
-//      0.0f, 0.0f, 1.0f,
-//      1.0f, 1.0f, 1.0f,
-//      0.0f, 0.0f, 1.0f,
-//      0.0f, 0.0f, 1.0f,
-//      1.0f, 0.0f, 0.0f,
-//      0.0f, 0.0f, 1.0f,
-//      1.0f, 0.0f, 0.0f,
-//      0.0f, 1.0f, 0.0f,
-//      0.0f, 0.0f, 1.0f,
-//      0.0f, 1.0f, 0.0f,
-//      1.0f, 1.0f, 1.0f
-//      0.0f,0.0f,1.0f,
-//      1.0f, 0.f, 0.f,
-//      1.0f, 0.f, 0.f,
-//      1.0f, 0.f, 0.f,
-//      0.0f,0.0f,1.0f,
-//      1.0f, 0.f, 0.f,
-//      1.0f, 0.f, 0.f,
-//      0.0f,0.0f,1.0f,
-//      1.0f, 0.f, 0.f,
-//      1.0f, 0.f, 0.f,
-//      1.0f, 0.f, 0.f,
-//      0.0f,0.0f,1.0f,
-//      0.0f,0.0f,1.0f,
-//      1.0f, 0.f, 0.f,
-//      1.0f, 0.f, 0.f,
-//      1.0f, 0.f, 0.f,
-//      1.0f, 0.f, 0.f,
-//      0.0f,0.0f,1.0f,
-//      1.0f, 0.f, 0.f,
-//      1.0f, 0.f, 0.f,
-//      1.0f, 0.f, 0.f,
-//      1.0f, 0.f, 0.f,
-//      1.0f, 0.f, 0.f,
-//      1.0f, 0.f, 0.f,
-//      1.0f, 0.f, 0.f,
-//      1.0f, 0.f, 0.f,
-//      1.0f, 0.f, 0.f,
-//      1.0f, 0.f, 0.f,
-//      0.0f, 0.f, 1.0f,
-//      1.0f, 0.f, 0.f,
-//      1.0f, 0.f, 0.f,
-//      1.0f, 0.f, 0.f,
-//      1.0f, 0.f, 0.f,
-//      1.0f, 0.f, 0.f,
-//      1.0f, 0.f, 0.f,
-//      1.0f, 0.f, 0.f,
-//  };
+  return {ss[0].str(), ss[1].str()};
+}
 
-  GLuint vertexbuffer;
-  glGenBuffers(1, &vertexbuffer);
-  glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex_buffer_data), g_vertex_buffer_data, GL_STATIC_DRAW);
+static unsigned int CompileShader(unsigned int type, const std::string &source) {
+  unsigned int id = glCreateShader(type);
+  auto src = source.c_str();
 
-  GLuint colorbuffer;
-  glGenBuffers(1, &colorbuffer);
-  glBindBuffer(GL_ARRAY_BUFFER, colorbuffer);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(g_color_buffer_data), g_color_buffer_data, GL_STATIC_DRAW);
+  glShaderSource(id, 1, &src, nullptr);
+  glCompileShader(id);
 
-  glm::mat4 rotation;
+  int result;
+  glGetShaderiv(id, GL_COMPILE_STATUS, &result);
+  if (result==GL_FALSE) {
+    int length;
+    glGetShaderiv(id, GL_INFO_LOG_LENGTH, &length);
+    auto msg = (char *) alloca(length*sizeof(char));
+    glGetShaderInfoLog(id, length, &length, msg);
+    std::cout << "Failed to compile " << (type==GL_VERTEX_SHADER ? "vertex" : "fragment") << " shader" << std::endl;
+    std::cout << msg << std::endl;
+    glDeleteShader(id);
+    return 0;
+  }
 
-  // Our ModelViewProjection : multiplication of our 3 matrices
-  //  glm::mat4 MVP        = Projection * View * Cube1; // Remember, matrix multiplication is the other way around
-  auto MVP1 = Projection*View*Cube1;
-  auto MVP2 = Projection*View*Cube2;
-  auto MVP3 = Projection*View*Cube3;
+  return id;
+}
 
-  do {
+static unsigned int CreateShader(const std::string &vertexShader, const std::string &fragmentShader) {
+  unsigned int program = glCreateProgram();
+  unsigned int vs = CompileShader(GL_VERTEX_SHADER, vertexShader);
+  unsigned int fs = CompileShader(GL_FRAGMENT_SHADER, fragmentShader);
 
-    // Clear the screen
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  glAttachShader(program, vs);
+  glAttachShader(program, fs);
+  glLinkProgram(program);
+  glDetachShader(program, vs);
+  glDetachShader(program, fs);
+  glValidateProgram(program);
 
-    // Use our shader
-    glUseProgram(programID);
+  glDeleteShader(vs);
+  glDeleteShader(fs);
 
-    // 1rst attribute buffer : vertices
-    glEnableVertexAttribArray(0);
-    glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
-    glVertexAttribPointer(
-        0,                  // attribute. No particular reason for 0, but must match the layout in the shader.
-        3,                  // size
-        GL_FLOAT,           // type
-        GL_FALSE,           // normalized?
-        0,                  // stride
-        (void *) nullptr            // array buffer offset
-    );
+  return program;
+}
 
-    // 2nd attribute buffer : colors
-    glEnableVertexAttribArray(1);
-    glBindBuffer(GL_ARRAY_BUFFER, colorbuffer);
-    glVertexAttribPointer(
-        1,                                // attribute. No particular reason for 1, but must match the layout in the shader.
-        3,                                // size
-        GL_FLOAT,                         // type
-        GL_FALSE,                         // normalized?
-        0,                                // stride
-        (void *) nullptr                          // array buffer offset
-    );
+int main() {
+  GLFWwindow *window;
 
-    // Send our transformation to the currently bound shader,
-    // in the "MVP" uniform
-    MVP1 = glm::rotate(MVP1, 0.005f, rotation1);
-    glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP1[0][0]);
+  if (!glfwInit()) {
+    return -1;
+  }
 
-    // Draw the triangle !
-    glDrawArrays(GL_TRIANGLES, 0, 12*3); // 12*3 indices starting at 0 -> 12 triangles
+  window = glfwCreateWindow(640, 480, "Cube", nullptr, nullptr);
 
-    MVP2 = glm::rotate(MVP2, 0.005f, rotation2);
-    glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP2[0][0]);
+  if (!window) {
+    glfwTerminate();
+    return -1;
+  }
 
-    glDrawArrays(GL_TRIANGLES, 0, 12*3); // 12*3 indices starting at 0 -> 12 triangles
+  glfwMakeContextCurrent(window);
+  glfwSwapInterval(1);
 
-    MVP3 = glm::rotate(MVP3, 0.005f, rotation3);
-    glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP3[0][0]);
+  if (glewInit()!=GLEW_OK)
+    std::cout << "Error" << std::endl;
 
-    glDrawArrays(GL_TRIANGLES, 0, 12*3); // 12*3 indices starting at 0 -> 12 triangles
+  glEnable(GL_DEBUG_OUTPUT);
+  glDebugMessageCallback(ErrorHandler, nullptr);
 
-    glDisableVertexAttribArray(0);
-    glDisableVertexAttribArray(1);
+  std::cout << glGetString(GL_VERSION) << std::endl;
 
-    // Swap buffers
+  float positions[] = {
+      -0.5f, -0.5f, // bottom left
+      0.5f, -0.5f, // bottom right
+      0.5f, 0.5f, // top right
+      -0.5f, 0.5f, // top left
+  };
+
+  unsigned int indices[] = {
+      0, 1, 2,
+      2, 3, 0
+  };
+
+  unsigned int buffer;
+  glGenBuffers(1, &buffer);
+  glBindBuffer(GL_ARRAY_BUFFER, buffer);
+  glBufferData(GL_ARRAY_BUFFER, 6*2*sizeof(float), positions, GL_STATIC_DRAW);
+
+  unsigned int ibo;
+  glGenBuffers(1, &ibo);
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
+  glBufferData(GL_ELEMENT_ARRAY_BUFFER, 6*sizeof(unsigned int), indices, GL_STATIC_DRAW);
+
+  glEnableVertexAttribArray(0);
+  glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float)*2, nullptr);
+
+  ShaderProgramSource source = ParseShader("resources/shaders/Basic.shader");
+  unsigned int shader = CreateShader(source.VertexSource, source.FragmentSource);
+  glUseProgram(shader);
+
+  auto location = glGetUniformLocation(shader, "u_color");
+  if (location==-1) {
+    std::cout << "Error in glGetUniformLocation" << std::endl;
+  }
+
+  glUniform4f(location, 0.0f, 1.0f, 0.0f, 1.0f);
+
+  float r = 0.0f;
+  float increment = 0.05f;
+
+  while (!glfwWindowShouldClose(window)) {
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    glUniform4f(location, r, 0.3f, 0.8f, 1.0f);
+    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+
+    if (r > 1.0f)
+      increment = -0.05f;
+    else if (r < 0.0f)
+      increment = 0.05f;
+
+    r += increment;
+
     glfwSwapBuffers(window);
+
     glfwPollEvents();
+  }
 
-  } // Check if the ESC key was pressed or the window was closed
-  while (glfwGetKey(window, GLFW_KEY_ESCAPE)!=GLFW_PRESS &&
-      glfwWindowShouldClose(window)==0);
+  glDeleteProgram(shader);
 
-  // Cleanup VBO and shader
-  glDeleteBuffers(1, &vertexbuffer);
-  glDeleteBuffers(1, &colorbuffer);
-  glDeleteProgram(programID);
-  glDeleteVertexArrays(1, &VertexArrayID);
-
-  // Close OpenGL window and terminate GLFW
   glfwTerminate();
-
   return 0;
 }
