@@ -57,6 +57,7 @@ int main(void) {
   glEnable(GL_DEPTH_TEST);
   // Accept fragment if it closer to the camera than the former one
   glDepthFunc(GL_LESS);
+  glEnable(GL_CULL_FACE);
 
   GLuint VertexArrayID;
   glGenVertexArrays(1, &VertexArrayID);
@@ -125,45 +126,88 @@ int main(void) {
       1.0f,-1.0f, 1.0f
   };
 
+  const size_t	verticesCount = sizeof(g_vertex_buffer_data) / sizeof(float);
+  GLfloat			g_color_buffer_data[verticesCount];
+
+  for (int i = 0; i < verticesCount; ++i) {
+    g_color_buffer_data[i] = (g_vertex_buffer_data[i] + 1.0f) / 2.0f;
+  }
+
   // One color for each vertex. They were generated randomly.
-  static const GLfloat g_color_buffer_data[] = {
-      0.0f,0.0f,1.0f,
-      1.0f, 0.f, 0.f,
-      1.0f, 0.f, 0.f,
-      1.0f, 0.f, 0.f,
-      0.0f,0.0f,1.0f,
-      1.0f, 0.f, 0.f,
-      1.0f, 0.f, 0.f,
-      0.0f,0.0f,1.0f,
-      1.0f, 0.f, 0.f,
-      1.0f, 0.f, 0.f,
-      1.0f, 0.f, 0.f,
-      0.0f,0.0f,1.0f,
-      0.0f,0.0f,1.0f,
-      1.0f, 0.f, 0.f,
-      1.0f, 0.f, 0.f,
-      1.0f, 0.f, 0.f,
-      1.0f, 0.f, 0.f,
-      0.0f,0.0f,1.0f,
-      1.0f, 0.f, 0.f,
-      1.0f, 0.f, 0.f,
-      1.0f, 0.f, 0.f,
-      1.0f, 0.f, 0.f,
-      1.0f, 0.f, 0.f,
-      1.0f, 0.f, 0.f,
-      1.0f, 0.f, 0.f,
-      1.0f, 0.f, 0.f,
-      1.0f, 0.f, 0.f,
-      1.0f, 0.f, 0.f,
-      0.0f, 0.f, 1.0f,
-      1.0f, 0.f, 0.f,
-      1.0f, 0.f, 0.f,
-      1.0f, 0.f, 0.f,
-      1.0f, 0.f, 0.f,
-      1.0f, 0.f, 0.f,
-      1.0f, 0.f, 0.f,
-      1.0f, 0.f, 0.f,
-  };
+//  static const GLfloat g_color_buffer_data[] = {
+//      1.0f, 0.0f, 1.0f, // triangle 1 : begin
+//      0.0f, 1.0f, 1.0f,
+//      0.0f, 1.0f, 0.0f, // triangle 1 : end
+//      0.0f, 0.0f, 1.0f, // triangle 2 : begin
+//      1.0f, 0.0f, 1.0f,
+//      1.0f, 0.0f, 0.0f, // triangle 2 : end
+//      1.0f, 1.0f, 1.0f,
+//      1.0f, 0.0f, 1.0f,
+//      0.0f, 1.0f, 1.0f,
+//      0.0f, 0.0f, 1.0f,
+//      0.0f, 1.0f, 1.0f,
+//      1.0f, 0.0f, 1.0f,
+//      1.0f, 0.0f, 1.0f,
+//      0.0f, 1.0f, 0.0f,
+//      1.0f, 0.0f, 0.0f,
+//      1.0f, 1.0f, 1.0f,
+//      0.0f, 1.0f, 1.0f,
+//      1.0f, 0.0f, 1.0f,
+//      0.0f, 1.0f, 0.0f,
+//      0.0f, 1.0f, 1.0f,
+//      1.0f, 1.0f, 1.0f,
+//      0.0f, 0.0f, 1.0f,
+//      0.0f, 1.0f, 1.0f,
+//      0.0f, 0.0f, 1.0f,
+//      0.0f, 1.0f, 1.0f,
+//      0.0f, 0.0f, 1.0f,
+//      1.0f, 1.0f, 1.0f,
+//      0.0f, 0.0f, 1.0f,
+//      0.0f, 0.0f, 1.0f,
+//      1.0f, 0.0f, 0.0f,
+//      0.0f, 0.0f, 1.0f,
+//      1.0f, 0.0f, 0.0f,
+//      0.0f, 1.0f, 0.0f,
+//      0.0f, 0.0f, 1.0f,
+//      0.0f, 1.0f, 0.0f,
+//      1.0f, 1.0f, 1.0f
+//      0.0f,0.0f,1.0f,
+//      1.0f, 0.f, 0.f,
+//      1.0f, 0.f, 0.f,
+//      1.0f, 0.f, 0.f,
+//      0.0f,0.0f,1.0f,
+//      1.0f, 0.f, 0.f,
+//      1.0f, 0.f, 0.f,
+//      0.0f,0.0f,1.0f,
+//      1.0f, 0.f, 0.f,
+//      1.0f, 0.f, 0.f,
+//      1.0f, 0.f, 0.f,
+//      0.0f,0.0f,1.0f,
+//      0.0f,0.0f,1.0f,
+//      1.0f, 0.f, 0.f,
+//      1.0f, 0.f, 0.f,
+//      1.0f, 0.f, 0.f,
+//      1.0f, 0.f, 0.f,
+//      0.0f,0.0f,1.0f,
+//      1.0f, 0.f, 0.f,
+//      1.0f, 0.f, 0.f,
+//      1.0f, 0.f, 0.f,
+//      1.0f, 0.f, 0.f,
+//      1.0f, 0.f, 0.f,
+//      1.0f, 0.f, 0.f,
+//      1.0f, 0.f, 0.f,
+//      1.0f, 0.f, 0.f,
+//      1.0f, 0.f, 0.f,
+//      1.0f, 0.f, 0.f,
+//      0.0f, 0.f, 1.0f,
+//      1.0f, 0.f, 0.f,
+//      1.0f, 0.f, 0.f,
+//      1.0f, 0.f, 0.f,
+//      1.0f, 0.f, 0.f,
+//      1.0f, 0.f, 0.f,
+//      1.0f, 0.f, 0.f,
+//      1.0f, 0.f, 0.f,
+//  };
 
   GLuint vertexbuffer;
   glGenBuffers(1, &vertexbuffer);
@@ -200,7 +244,7 @@ int main(void) {
         GL_FLOAT,           // type
         GL_FALSE,           // normalized?
         0,                  // stride
-        (void *) 0            // array buffer offset
+        (void *) nullptr            // array buffer offset
     );
 
     // 2nd attribute buffer : colors
@@ -212,23 +256,23 @@ int main(void) {
         GL_FLOAT,                         // type
         GL_FALSE,                         // normalized?
         0,                                // stride
-        (void *) 0                          // array buffer offset
+        (void *) nullptr                          // array buffer offset
     );
 
     // Send our transformation to the currently bound shader,
     // in the "MVP" uniform
-//    MVP1 = glm::rotate(MVP1, 0.005f, rotation1);
+    MVP1 = glm::rotate(MVP1, 0.005f, rotation1);
     glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP1[0][0]);
 
     // Draw the triangle !
     glDrawArrays(GL_TRIANGLES, 0, 12*3); // 12*3 indices starting at 0 -> 12 triangles
 
-//    MVP2 = glm::rotate(MVP2, 0.005f, rotation2);
+    MVP2 = glm::rotate(MVP2, 0.005f, rotation2);
     glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP2[0][0]);
 
     glDrawArrays(GL_TRIANGLES, 0, 12*3); // 12*3 indices starting at 0 -> 12 triangles
 
-//    MVP3 = glm::rotate(MVP3, 0.005f, rotation3);
+    MVP3 = glm::rotate(MVP3, 0.005f, rotation3);
     glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP3[0][0]);
 
     glDrawArrays(GL_TRIANGLES, 0, 12*3); // 12*3 indices starting at 0 -> 12 triangles
