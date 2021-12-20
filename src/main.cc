@@ -1,301 +1,198 @@
-#include <cstdio>
-#include <GL/glew.h>
-#include <GLFW/glfw3.h>
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
+#include <iostream>
+#include <fstream>
+#include <sstream>
 
-#include "common/shader.h"
+#include "renderer/renderer.h"
+#include "texture/texture.h"
+#include "vendor/imgui/imgui.h"
+#include "vendor/imgui/imgui_impl_glfw.h"
+#include "vendor/imgui/imgui_impl_opengl3.h"
 
-bool initialize(GLFWwindow *&window) {
-  if (!glfwInit()) {
-    fprintf(stderr, "Failed to initialize GLFW\n");
-    getchar();
-    return false;
-  }
+constexpr unsigned int WIDTH = 1280;
+constexpr unsigned int HEIGHT = 720;
 
-  glfwWindowHint(GLFW_SAMPLES, 4);
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-  glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); // To make MacOS happy; should not be needed
-  glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
-  // Open a window and create its OpenGL context
-  window = glfwCreateWindow(1024, 768, "Lab 1 - Week 1", NULL, NULL);
-  if (window==NULL) {
-    fprintf(stderr,
-            "Failed to open GLFW window. If you have an Intel GPU, they are not 3.3 compatible. Try the 2.1 version of the tutorials.\n");
-    getchar();
-    glfwTerminate();
-    return false;
-  }
-  glfwMakeContextCurrent(window);
-
-  // Initialize GLEW
-  glewExperimental = true; // Needed for core profile
-  if (glewInit()!=GLEW_OK) {
-    fprintf(stderr, "Failed to initialize GLEW\n");
-    getchar();
-    glfwTerminate();
-    return false;
-  }
-
-  // Ensure we can capture the escape key being pressed below
-  glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
-
-  // Dark blue background
-  glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-
-  return true;
-}
-
-int main(void) {
+int main() {
   GLFWwindow *window;
-  if (!initialize(window)) {
+
+  if (!glfwInit()) {
     return -1;
   }
-  // Enable depth test
-  glEnable(GL_DEPTH_TEST);
-  // Accept fragment if it closer to the camera than the former one
-  glDepthFunc(GL_LESS);
-  glEnable(GL_CULL_FACE);
 
-  GLuint VertexArrayID;
-  glGenVertexArrays(1, &VertexArrayID);
-  glBindVertexArray(VertexArrayID);
+  window = glfwCreateWindow(WIDTH, HEIGHT, "Test", nullptr, nullptr);
 
-  // Create and compile our GLSL program from the shaders
-  GLuint programID = LoadShaders("TransformVertexShader.vertexshader", "ColorFragmentShader.fragmentshader");
-
-  // Get a handle for our "MVP" uniform
-  GLuint MatrixID = glGetUniformLocation(programID, "MVP");
-
-  // Projection matrix : 45° Field of View, 4:3 ratio, display range : 0.1 unit <-> 100 units
-  glm::mat4 Projection = glm::perspective(glm::radians(45.0f), 4.0f/3.0f, 0.1f, 100.0f);
-  // Camera matrix
-  glm::mat4 View = glm::lookAt(
-      glm::vec3(0, 0, -20), // Camera is at (4,3,-3), in World Space
-      glm::vec3(0, 0, 0), // and looks at the origin
-      glm::vec3(0, 1, 0)  // Head is up (set to 0,-1,0 to look upside-down)
-  );
-  // Cube1 matrix : an identity matrix (model will be at the origin)
-  glm::mat4 Cube1 = glm::translate(glm::mat4{1.0f}, glm::vec3{-5, 0, 0});
-  glm::mat4 Cube2 = glm::translate(glm::mat4{1.0f}, glm::vec3{0, 0, 0});
-  glm::mat4 Cube3 = glm::translate(glm::mat4{1.0f}, glm::vec3{5, 0, 0});
-  auto rotation1 = glm::vec3{((float)rand()/RAND_MAX)*3, ((float)rand()/RAND_MAX)*3, ((float)rand()/RAND_MAX)*3};
-  auto rotation2 = glm::vec3{((float)rand()/RAND_MAX)*3, ((float)rand()/RAND_MAX)*3, ((float)rand()/RAND_MAX)*3};
-  auto rotation3 = glm::vec3{((float)rand()/RAND_MAX)*3, ((float)rand()/RAND_MAX)*3, ((float)rand()/RAND_MAX)*3};
-
-  // Our vertices. Three consecutive floats give a 3D vertex; Three consecutive vertices give a triangle.
-  // A cube has 6 faces with 2 triangles each, so this makes 6*2=12 triangles, and 12*3 vertices
-  static const GLfloat g_vertex_buffer_data[] = {
-      -1.0f,-1.0f,-1.0f, // triangle 1 : begin
-      -1.0f,-1.0f, 1.0f,
-      -1.0f, 1.0f, 1.0f, // triangle 1 : end
-      1.0f, 1.0f,-1.0f, // triangle 2 : begin
-      -1.0f,-1.0f,-1.0f,
-      -1.0f, 1.0f,-1.0f, // triangle 2 : end
-      1.0f,-1.0f, 1.0f,
-      -1.0f,-1.0f,-1.0f,
-      1.0f,-1.0f,-1.0f,
-      1.0f, 1.0f,-1.0f,
-      1.0f,-1.0f,-1.0f,
-      -1.0f,-1.0f,-1.0f,
-      -1.0f,-1.0f,-1.0f,
-      -1.0f, 1.0f, 1.0f,
-      -1.0f, 1.0f,-1.0f,
-      1.0f,-1.0f, 1.0f,
-      -1.0f,-1.0f, 1.0f,
-      -1.0f,-1.0f,-1.0f,
-      -1.0f, 1.0f, 1.0f,
-      -1.0f,-1.0f, 1.0f,
-      1.0f,-1.0f, 1.0f,
-      1.0f, 1.0f, 1.0f,
-      1.0f,-1.0f,-1.0f,
-      1.0f, 1.0f,-1.0f,
-      1.0f,-1.0f,-1.0f,
-      1.0f, 1.0f, 1.0f,
-      1.0f,-1.0f, 1.0f,
-      1.0f, 1.0f, 1.0f,
-      1.0f, 1.0f,-1.0f,
-      -1.0f, 1.0f,-1.0f,
-      1.0f, 1.0f, 1.0f,
-      -1.0f, 1.0f,-1.0f,
-      -1.0f, 1.0f, 1.0f,
-      1.0f, 1.0f, 1.0f,
-      -1.0f, 1.0f, 1.0f,
-      1.0f,-1.0f, 1.0f
-  };
-
-  const size_t	verticesCount = sizeof(g_vertex_buffer_data) / sizeof(float);
-  GLfloat			g_color_buffer_data[verticesCount];
-
-  for (int i = 0; i < verticesCount; ++i) {
-    g_color_buffer_data[i] = (g_vertex_buffer_data[i] + 1.0f) / 2.0f;
+  if (!window) {
+    glfwTerminate();
+    return -1;
   }
 
-  // One color for each vertex. They were generated randomly.
-//  static const GLfloat g_color_buffer_data[] = {
-//      1.0f, 0.0f, 1.0f, // triangle 1 : begin
-//      0.0f, 1.0f, 1.0f,
-//      0.0f, 1.0f, 0.0f, // triangle 1 : end
-//      0.0f, 0.0f, 1.0f, // triangle 2 : begin
-//      1.0f, 0.0f, 1.0f,
-//      1.0f, 0.0f, 0.0f, // triangle 2 : end
-//      1.0f, 1.0f, 1.0f,
-//      1.0f, 0.0f, 1.0f,
-//      0.0f, 1.0f, 1.0f,
-//      0.0f, 0.0f, 1.0f,
-//      0.0f, 1.0f, 1.0f,
-//      1.0f, 0.0f, 1.0f,
-//      1.0f, 0.0f, 1.0f,
-//      0.0f, 1.0f, 0.0f,
-//      1.0f, 0.0f, 0.0f,
-//      1.0f, 1.0f, 1.0f,
-//      0.0f, 1.0f, 1.0f,
-//      1.0f, 0.0f, 1.0f,
-//      0.0f, 1.0f, 0.0f,
-//      0.0f, 1.0f, 1.0f,
-//      1.0f, 1.0f, 1.0f,
-//      0.0f, 0.0f, 1.0f,
-//      0.0f, 1.0f, 1.0f,
-//      0.0f, 0.0f, 1.0f,
-//      0.0f, 1.0f, 1.0f,
-//      0.0f, 0.0f, 1.0f,
-//      1.0f, 1.0f, 1.0f,
-//      0.0f, 0.0f, 1.0f,
-//      0.0f, 0.0f, 1.0f,
-//      1.0f, 0.0f, 0.0f,
-//      0.0f, 0.0f, 1.0f,
-//      1.0f, 0.0f, 0.0f,
-//      0.0f, 1.0f, 0.0f,
-//      0.0f, 0.0f, 1.0f,
-//      0.0f, 1.0f, 0.0f,
-//      1.0f, 1.0f, 1.0f
-//      0.0f,0.0f,1.0f,
-//      1.0f, 0.f, 0.f,
-//      1.0f, 0.f, 0.f,
-//      1.0f, 0.f, 0.f,
-//      0.0f,0.0f,1.0f,
-//      1.0f, 0.f, 0.f,
-//      1.0f, 0.f, 0.f,
-//      0.0f,0.0f,1.0f,
-//      1.0f, 0.f, 0.f,
-//      1.0f, 0.f, 0.f,
-//      1.0f, 0.f, 0.f,
-//      0.0f,0.0f,1.0f,
-//      0.0f,0.0f,1.0f,
-//      1.0f, 0.f, 0.f,
-//      1.0f, 0.f, 0.f,
-//      1.0f, 0.f, 0.f,
-//      1.0f, 0.f, 0.f,
-//      0.0f,0.0f,1.0f,
-//      1.0f, 0.f, 0.f,
-//      1.0f, 0.f, 0.f,
-//      1.0f, 0.f, 0.f,
-//      1.0f, 0.f, 0.f,
-//      1.0f, 0.f, 0.f,
-//      1.0f, 0.f, 0.f,
-//      1.0f, 0.f, 0.f,
-//      1.0f, 0.f, 0.f,
-//      1.0f, 0.f, 0.f,
-//      1.0f, 0.f, 0.f,
-//      0.0f, 0.f, 1.0f,
-//      1.0f, 0.f, 0.f,
-//      1.0f, 0.f, 0.f,
-//      1.0f, 0.f, 0.f,
-//      1.0f, 0.f, 0.f,
-//      1.0f, 0.f, 0.f,
-//      1.0f, 0.f, 0.f,
-//      1.0f, 0.f, 0.f,
-//  };
+  glfwMakeContextCurrent(window);
+  glfwSwapInterval(1);
 
-  GLuint vertexbuffer;
-  glGenBuffers(1, &vertexbuffer);
-  glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex_buffer_data), g_vertex_buffer_data, GL_STATIC_DRAW);
+  if (glewInit()!=GLEW_OK)
+    std::cout << "Error" << std::endl;
 
-  GLuint colorbuffer;
-  glGenBuffers(1, &colorbuffer);
-  glBindBuffer(GL_ARRAY_BUFFER, colorbuffer);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(g_color_buffer_data), g_color_buffer_data, GL_STATIC_DRAW);
+  glEnable(GL_DEBUG_OUTPUT);
+  glDebugMessageCallback(ErrorHandler, nullptr);
 
-  glm::mat4 rotation;
+  std::cout << glGetString(GL_VERSION) << std::endl;
 
-  // Our ModelViewProjection : multiplication of our 3 matrices
-  //  glm::mat4 MVP        = Projection * View * Cube1; // Remember, matrix multiplication is the other way around
-  auto MVP1 = Projection*View*Cube1;
-  auto MVP2 = Projection*View*Cube2;
-  auto MVP3 = Projection*View*Cube3;
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  glEnable(GL_BLEND);
+  glEnable(GL_CULL_FACE);
 
-  do {
+  float positions[] = {
+      -0.5f, -0.5f, 0.5f, 1.0f, 0.0f, 0.0f,     // front  bottom  left
+      0.5f, -0.5f, 0.5f, 0.0f, 1.0f, 0.0f,      // front  bottom  right
+      0.5f, 0.5f, 0.5f, 0.0f, 0.0f, 1.0f,       // front  top     right
+      -0.5f, 0.5f, 0.5f, 1.0f, 1.0f, 0.0f,      // front  top     left
 
-    // Clear the screen
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+      -0.5f, -0.5f, -0.5f, 1.0f, 0.0f, 1.0f,     // back   bottom  left
+      0.5f, -0.5f, -0.5f, 0.0f, 1.0f, 1.0f,      // back   bottom  right
+      0.5f, 0.5f, -0.5f, 0.25f, 0.25f, 0.25f,    // back   top     right
+      -0.5f, 0.5f, -0.5f, 1.0f, 1.0f, 1.0f,      // back   top     left
+  };
 
-    // Use our shader
-    glUseProgram(programID);
+  unsigned int indices[] = {
+      0, 1, 2,    // front  1
+      2, 3, 0,    // front  2
+      1, 5, 6,    // right  1
+      6, 2, 1,    // right  2
+      0, 3, 4,    // left   1
+      4, 3, 7,    // left   2
+      5, 4, 6,    // back   1
+      6, 4, 7,    // back   2
+      3, 2, 7,    // top    1
+      7, 2, 6,    // top    2
+      0, 4, 1,    // bottom 1
+      1, 4, 5,    // bottom 2
+  };
 
-    // 1rst attribute buffer : vertices
-    glEnableVertexAttribArray(0);
-    glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
-    glVertexAttribPointer(
-        0,                  // attribute. No particular reason for 0, but must match the layout in the shader.
-        3,                  // size
-        GL_FLOAT,           // type
-        GL_FALSE,           // normalized?
-        0,                  // stride
-        (void *) nullptr            // array buffer offset
-    );
+  VertexArray va;
+  VertexBuffer vb(positions, 8*6*sizeof(float));
 
-    // 2nd attribute buffer : colors
-    glEnableVertexAttribArray(1);
-    glBindBuffer(GL_ARRAY_BUFFER, colorbuffer);
-    glVertexAttribPointer(
-        1,                                // attribute. No particular reason for 1, but must match the layout in the shader.
-        3,                                // size
-        GL_FLOAT,                         // type
-        GL_FALSE,                         // normalized?
-        0,                                // stride
-        (void *) nullptr                          // array buffer offset
-    );
+  VertexBufferLayout layout;
+  layout.Push<float>(3);
+  layout.Push<float>(3);
+  va.AddBuffer(vb, layout);
 
-    // Send our transformation to the currently bound shader,
-    // in the "MVP" uniform
-    MVP1 = glm::rotate(MVP1, 0.005f, rotation1);
-    glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP1[0][0]);
+  IndexBuffer ib(indices, 36);
+  glm::vec3 cubeTranslation1(-5.f, 0.0f, 0.0f);
+  glm::vec3 cubeTranslation2(5.f, 0.0f, 0.0f);
+  glm::vec3 cubeTranslation3(0.f, 0.0f, 0.0f);
+  glm::vec3 cubeRotation1(0, 1, 0);
+  glm::vec3 cubeRotation2(1, 0, 0);
+  glm::vec3 cubeRotation3(0, 0, 1);
 
-    // Draw the triangle !
-    glDrawArrays(GL_TRIANGLES, 0, 12*3); // 12*3 indices starting at 0 -> 12 triangles
+  float rotationSpeed = 0.05f;
+  float rotationValue = 0.0f;
+  bool should_rotate = true;
+  glm::mat4 modelTranslation;
+  auto modelRotation = glm::rotate(glm::mat4(1.0f), 0.0f, glm::vec3(0, 1, 0));
+  auto modelScaling = glm::scale(glm::mat4(1.0f), glm::vec3(1, 1, 1));
+  glm::mat4 model1, model2, model3;
 
-    MVP2 = glm::rotate(MVP2, 0.005f, rotation2);
-    glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP2[0][0]);
+  auto view = glm::lookAt(glm::vec3{0, 0, 8}, glm::vec3{0, 0, 0}, glm::vec3{0, 1, 0});
+  auto proj = glm::perspective(45.0f, (float) WIDTH/HEIGHT, 0.1f, 100.0f);
+  glm::mat4 mvp;
 
-    glDrawArrays(GL_TRIANGLES, 0, 12*3); // 12*3 indices starting at 0 -> 12 triangles
+  Shader cubeShader("resources/shaders/Basic.shader");
+  cubeShader.Bind();
 
-    MVP3 = glm::rotate(MVP3, 0.005f, rotation3);
-    glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP3[0][0]);
+//  Texture texture("resources/textures/bricks.jpg");
+//  texture.Bind();
+//  cubeShaderTwo.SetUniform1i("u_Texture", 0);
 
-    glDrawArrays(GL_TRIANGLES, 0, 12*3); // 12*3 indices starting at 0 -> 12 triangles
+  va.Unbind();
+  vb.Unbind();
+  ib.Unbind();
+  cubeShader.Unbind();
 
-    glDisableVertexAttribArray(0);
-    glDisableVertexAttribArray(1);
+  Renderer renderer;
 
-    // Swap buffers
+  ImGui::CreateContext();
+  ImGui_ImplGlfw_InitForOpenGL(window, true);
+  ImGui_ImplOpenGL3_Init();
+  ImGui::StyleColorsDark();
+
+  while (!glfwWindowShouldClose(window)) {
+    renderer.Clear();
+
+    ImGui_ImplOpenGL3_NewFrame();
+    ImGui_ImplGlfw_NewFrame();
+    ImGui::NewFrame();
+
+    {
+      modelTranslation = glm::translate(glm::mat4(1.0f), cubeTranslation1);
+      if (should_rotate) {
+        modelRotation = glm::rotate(glm::mat4(1.0f), rotationValue, cubeRotation1);
+        model1 = modelTranslation*modelRotation*modelScaling;
+      }
+
+      mvp = proj*view*model1;
+      cubeShader.Bind();
+      cubeShader.setUniformMat4f("u_MVP", mvp);
+
+      renderer.Draw(va, ib, cubeShader);
+    }
+
+    {
+      modelTranslation = glm::translate(glm::mat4(1.0f), cubeTranslation2);
+      if (should_rotate) {
+        modelRotation = glm::rotate(glm::mat4(1.0f), rotationValue, cubeRotation2);
+        model2 = modelTranslation*modelRotation*modelScaling;
+      }
+
+      mvp = proj*view*model2;
+      cubeShader.Bind();
+      cubeShader.setUniformMat4f("u_MVP", mvp);
+
+      renderer.Draw(va, ib, cubeShader);
+    }
+
+    {
+      modelTranslation = glm::translate(glm::mat4(1.0f), cubeTranslation3);
+      if (should_rotate) {
+        modelRotation = glm::rotate(glm::mat4(1.0f), rotationValue, cubeRotation3);
+        model3 = modelTranslation*modelRotation*modelScaling;
+      }
+      mvp = proj*view*model3;
+      cubeShader.Bind();
+      cubeShader.setUniformMat4f("u_MVP", mvp);
+
+      renderer.Draw(va, ib, cubeShader);
+    }
+
+    {
+      ImGui::Checkbox("Rotation", &should_rotate);
+      ImGui::SliderFloat("Rotation Speed", &rotationSpeed, 0.05f, 0.2f);
+      ImGui::SliderFloat("Left Cube X Pos", &cubeTranslation1.x, -5.0f, -2.5f);
+      ImGui::SliderFloat3("Left Cube Rotation Axis", &cubeRotation1.x, -5.0f, -2.5f);
+      ImGui::SliderFloat("Right Cube X Pos", &cubeTranslation2.x, 2.5f, 5.0f);
+      ImGui::SliderFloat3("Right Cube Rotation Axis", &cubeRotation2.x, 2.5f, 5.0f);
+      ImGui::SliderFloat("Center Cube X Pos", &cubeTranslation3.x, -1.0f, 1.0f);
+      ImGui::SliderFloat3("Center Cube Rotation Axis", &cubeRotation3.x, 2.5f, 5.0f);
+
+      ImGui::Text("Application average %.3f ms/frame (%.1f FPS)",
+                  1000.0f/ImGui::GetIO().Framerate,
+                  ImGui::GetIO().Framerate);
+    }
+    if (should_rotate) {
+      rotationValue += rotationSpeed;
+      if (rotationValue > 360.0f)
+        rotationValue = 0.0f;
+    }
+
+    ImGui::Render();
+    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
     glfwSwapBuffers(window);
+
     glfwPollEvents();
+  }
 
-  } // Check if the ESC key was pressed or the window was closed
-  while (glfwGetKey(window, GLFW_KEY_ESCAPE)!=GLFW_PRESS &&
-      glfwWindowShouldClose(window)==0);
-
-  // Cleanup VBO and shader
-  glDeleteBuffers(1, &vertexbuffer);
-  glDeleteBuffers(1, &colorbuffer);
-  glDeleteProgram(programID);
-  glDeleteVertexArrays(1, &VertexArrayID);
-
-  // Close OpenGL window and terminate GLFW
+  ImGui_ImplOpenGL3_Shutdown();
+  ImGui_ImplGlfw_Shutdown();
+  ImGui::DestroyContext();
   glfwTerminate();
-
   return 0;
 }
