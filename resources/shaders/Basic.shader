@@ -2,19 +2,19 @@
 #version 410 core
 
 layout(location = 0) in vec4 position;
-// layout(location = 1) in vec2 texCoord;
-layout(location = 1) in vec3 vertexColor;
+layout(location = 2) in vec2 texCoord;
+// layout(location = 1) in vec3 vertexColor;
 
 out vec2 v_TexCoord;
-out vec4 pixelColor;
+// out vec4 pixelColor;
 
 uniform mat4 u_MVP;
 
 void main()
 {
    gl_Position = u_MVP*position;
-   // v_TexCoord = texCoord;
-   pixelColor = vec4(vertexColor, 1.0);
+   v_TexCoord = texCoord;
+//    pixelColor = vec4(vertexColor, 1.0);
 };
 
 #shader fragment
@@ -23,13 +23,13 @@ void main()
 layout(location = 0) out vec4 color;
 
 in vec2 v_TexCoord;
-in vec4 pixelColor;
+// in vec4 pixelColor;
 
 uniform vec4 u_color;
-// uniform sampler2D u_Texture;
+uniform sampler2D u_Texture;
 
 void main()
 {
-   // vec4 texColor = texture(u_Texture, v_TexCoord);
-   color = pixelColor;
+   vec4 texColor = texture(u_Texture, v_TexCoord);
+   color = texColor;
 };

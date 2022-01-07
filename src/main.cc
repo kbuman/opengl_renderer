@@ -40,39 +40,101 @@ int main() {
   glEnable(GL_BLEND);
   glEnable(GL_CULL_FACE);
 
-  float positions[] = {
-      -0.5f, -0.5f, 0.5f, 1.0f, 0.0f, 0.0f,     // front  bottom  left
-      0.5f, -0.5f, 0.5f, 0.0f, 1.0f, 0.0f,      // front  bottom  right
-      0.5f, 0.5f, 0.5f, 0.0f, 0.0f, 1.0f,       // front  top     right
-      -0.5f, 0.5f, 0.5f, 1.0f, 1.0f, 0.0f,      // front  top     left
+//  float positions[] = {
+//      -0.5f, -0.5f, 0.5f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f,     // front  bottom  left
+//      0.5f, -0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,      // front  bottom  right
+//      0.5f, 0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f,       // front  top     right
+//      -0.5f, 0.5f, 0.5f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f,      // front  top     left
+//
+//      -0.5f, -0.5f, -0.5f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f,    // back   bottom  left
+//      0.5f, -0.5f, -0.5f, 0.0f, 1.0f, 1.0f, 1.0f, 0.0f,     // back   bottom  right
+//      0.5f, 0.5f, -0.5f, 0.25f, 0.25f, 0.25f, 1.0f, 1.0f,   // back   top     right
+//      -0.5f, 0.5f, -0.5f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f,     // back   top     left
+//  };
+//
+//  unsigned int indices[] = {
+//      0, 1, 2,    // front  1
+//      2, 3, 0,    // front  2
+//      1, 5, 6,    // right  1
+//      6, 2, 1,    // right  2
+//      0, 3, 4,    // left   1
+//      4, 3, 7,    // left   2
+//      5, 4, 6,    // back   1
+//      6, 4, 7,    // back   2
+//      3, 2, 7,    // top    1
+//      7, 2, 6,    // top    2
+//      0, 4, 1,    // bottom 1
+//      1, 4, 5,    // bottom 2
+//  };
 
-      -0.5f, -0.5f, -0.5f, 1.0f, 0.0f, 1.0f,     // back   bottom  left
-      0.5f, -0.5f, -0.5f, 0.0f, 1.0f, 1.0f,      // back   bottom  right
-      0.5f, 0.5f, -0.5f, 0.25f, 0.25f, 0.25f,    // back   top     right
-      -0.5f, 0.5f, -0.5f, 1.0f, 1.0f, 1.0f,      // back   top     left
+  float positions[] = {
+      -1.0, -1.0, 1.0, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f,     // 1/1
+      -1.0, -1.0, 1.0, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f,     // 1/2
+      -1.0, -1.0, 1.0, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f,     // 1/3
+
+      1.0, -1.0, 1.0, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f,      // 2/1
+      1.0, -1.0, 1.0, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,      // 2/2
+      1.0, -1.0, 1.0, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f,      // 2/4
+
+      -1.0, 1.0, 1.0, 1.0f, 1.0f, 0.0f, 0.0f, 0.0f,      // 3/1
+      -1.0, 1.0, 1.0, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f,      // 3/3
+      -1.0, 1.0, 1.0, 1.0f, 1.0f, 0.0f, 1.0f, 1.0f,      // 3/4
+
+      1.0, 1.0, 1.0, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f,       // 4/2
+      1.0, 1.0, 1.0, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f,       // 4/3
+      1.0, 1.0, 1.0, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f,       // 4/4
+
+
+      -1.0, 1.0, -1.0, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f,     // 5/3
+      -1.0, 1.0, -1.0, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f,     // 5/4
+      -1.0, 1.0, -1.0, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f,     // back   top     left    for top face
+
+      1.0, 1.0, -1.0, 0.25f, 0.25f, 0.25f, 0.0f, 1.0f,   // 6/3
+      1.0, 1.0, -1.0, 0.25f, 0.25f, 0.25f, 1.0f, 1.0f,   // 6/4
+      1.0, 1.0, -1.0, 0.25f, 0.25f, 0.25f, 0.0f, 0.0f,   // back   top     right   for top face
+
+      -1.0, -1.0, -1.0, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f,    // 7/1
+      -1.0, -1.0, -1.0, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f,    // 7/2
+      -1.0, -1.0, -1.0, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f,    // back   bottom  left    for bottom face
+
+      1.0, -1.0, -1.0, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f,     // 8/1
+      1.0, -1.0, -1.0, 0.0f, 1.0f, 1.0f, 1.0f, 0.0f,     // 8/2
+      1.0, -1.0, -1.0, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f,     // back   bottom  right   for bottom face
   };
 
   unsigned int indices[] = {
-      0, 1, 2,    // front  1
-      2, 3, 0,    // front  2
-      1, 5, 6,    // right  1
-      6, 2, 1,    // right  2
-      0, 3, 4,    // left   1
-      4, 3, 7,    // left   2
-      5, 4, 6,    // back   1
-      6, 4, 7,    // back   2
-      3, 2, 7,    // top    1
-      7, 2, 6,    // top    2
-      0, 4, 1,    // bottom 1
-      1, 4, 5,    // bottom 2
+      // front
+      0, 4, 7,
+      7, 4, 11,
+
+      // top
+      6, 9, 12,
+      12, 9, 16,
+
+      // back
+      13, 15, 19,
+      19, 15, 21,
+
+      // bottom
+      18, 22, 2,
+       2, 22, 5,
+
+      // right
+      3, 22, 10,
+      10, 22, 16,
+
+      // left
+      18, 1, 12,
+      12, 1, 8,
   };
 
   VertexArray va;
-  VertexBuffer vb(positions, 8*6*sizeof(float));
+  VertexBuffer vb(positions, 24*8*sizeof(float));
 
   VertexBufferLayout layout;
-  layout.Push<float>(3);
-  layout.Push<float>(3);
+  layout.Push<float>(3); // x,y,z
+  layout.Push<float>(3); // r,g,b
+  layout.Push<float>(2); // u,v
   va.AddBuffer(vb, layout);
 
   IndexBuffer ib(indices, 36);
@@ -83,7 +145,7 @@ int main() {
   glm::vec3 cubeRotation2(1, 0, 0);
   glm::vec3 cubeRotation3(0, 0, 1);
 
-  float rotationSpeed = 0.05f;
+  float rotationSpeed = 0.005f;
   float rotationValue = 0.0f;
   bool should_rotate = true;
   glm::mat4 modelTranslation;
@@ -98,9 +160,9 @@ int main() {
   Shader cubeShader("resources/shaders/Basic.shader");
   cubeShader.Bind();
 
-//  Texture texture("resources/textures/bricks.jpg");
-//  texture.Bind();
-//  cubeShaderTwo.SetUniform1i("u_Texture", 0);
+  Texture texture("resources/textures/bricks.jpg");
+  texture.Bind();
+  cubeShader.SetUniform1i("u_Texture", 0);
 
   va.Unbind();
   vb.Unbind();
@@ -164,7 +226,7 @@ int main() {
 
     {
       ImGui::Checkbox("Rotation", &should_rotate);
-      ImGui::SliderFloat("Rotation Speed", &rotationSpeed, 0.05f, 0.2f);
+      ImGui::SliderFloat("Rotation Speed", &rotationSpeed, 0.005f, 0.2f);
       ImGui::SliderFloat("Left Cube X Pos", &cubeTranslation1.x, -5.0f, -2.5f);
       ImGui::SliderFloat3("Left Cube Rotation Axis", &cubeRotation1.x, -5.0f, -2.5f);
       ImGui::SliderFloat("Right Cube X Pos", &cubeTranslation2.x, 2.5f, 5.0f);
