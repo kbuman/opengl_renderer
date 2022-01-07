@@ -24,6 +24,9 @@ class Shader {
   // Set uniforms
   void SetUniform1i(const std::string &, int);
   void SetUniform1f(const std::string &, float);
+  void SetUniform3f(const std::string &, float, float ,float);
+  void SetUniformVec3(const std::string&, glm::vec3&);
+  void SetUniformVec4(const std::string&, glm::vec4&);
   void setUniformMat4f(const std::string &, const glm::mat4 &);
   void SetUniform4f(const std::string &, float, float, float, float);
  private:
