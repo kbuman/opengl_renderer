@@ -202,6 +202,7 @@ int main() {
       ImGui::SliderFloat("Radius", &motion_radius, 0, camera_z_dist/2.5f);
       ImGui::SliderFloat3("Rotation Axis", &cubeRotation.x, 0.0f, 1.0f);
       ImGui::SliderFloat3("Light Position Axis", &defaultLight.Position().x, -10.0f, 10.0f);
+      ImGui::ColorEdit4("Light Color", &defaultLight.Color().x);
 
       ImGui::Text("Application average %.3f ms/frame (%.1f FPS)",
                   1000.0f/ImGui::GetIO().Framerate,
