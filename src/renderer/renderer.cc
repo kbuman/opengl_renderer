@@ -20,16 +20,31 @@ void GLAPIENTRY ErrorHandler(GLenum source,
 
 }
 
-void Renderer::Draw(const VertexArray &va, const IndexBuffer &ib, const Shader &shader) const {
-  shader.Bind();
-  va.Bind();
-  ib.Bind();
-  glDrawElements(GL_TRIANGLES, (int) ib.Count(), GL_UNSIGNED_INT, nullptr);
-  shader.Unbind();
-  va.Unbind();
-  ib.Unbind();
+void Renderer::Draw(const VertexArray &va, const IndexBuffer &ib, const Shader &shader, bool transparent) const {
+  if (transparent) {
+    glDisable(GL_CULL_FACE);
+    glDepthMask(GL_FALSE);
+    shader.Bind();
+    va.Bind();
+    ib.Bind();
+    glDrawElements(GL_TRIANGLES, (int) ib.Count(), GL_UNSIGNED_INT, nullptr);
+    shader.Unbind();
+    va.Unbind();
+    ib.Unbind();
+  } else {
+    shader.Bind();
+    va.Bind();
+    ib.Bind();
+    glDrawElements(GL_TRIANGLES, (int) ib.Count(), GL_UNSIGNED_INT, nullptr);
+    shader.Unbind();
+    va.Unbind();
+    ib.Unbind();
+  }
+
 }
 
 void Renderer::Clear() const {
-  glClear(GL_COLOR_BUFFER_BIT);
+  glEnable(GL_CULL_FACE);
+  glDepthMask(GL_TRUE);
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }

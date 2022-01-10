@@ -2,7 +2,7 @@
 #version 410 core
 
 layout(location = 0) in vec4 position;
-layout(location = 1) in vec3 vertexColor;
+layout(location = 1) in vec4 vertexColor;
 layout(location = 2) in vec2 texCoord;
 layout(location = 3) in vec3 aNormal;
 
@@ -20,7 +20,7 @@ void main()
    gl_Position = camera*vec4(currentPosition,1.0f);
    v_TexCoord = texCoord;
    normal = normalize(vec3(model*vec4(aNormal,1.0f)));
-   pixelColor = vec4(vertexColor, 1.0f);
+   pixelColor = vertexColor;
 };
 
 #shader fragment
@@ -54,7 +54,7 @@ void main()
    float specAmount = pow(max(dot(viewDirection, reflectionDirection), 0.0f), 50);
    float specular = specAmount * specularLight;
 
-   vec4 texColor = texture(diffuseTexture, v_TexCoord) * lightColor * (diffuse+ambient+specular);
+   vec4 texColor = pixelColor * lightColor * (diffuse+ambient+specular);
+//    vec4 texColor = texture(diffuseTexture, v_TexCoord) * lightColor * (diffuse+ambient+specular);
    FragColor = texColor;
-//    FragColor = pixelColor;
 };

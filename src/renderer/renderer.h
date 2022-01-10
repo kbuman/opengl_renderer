@@ -25,7 +25,7 @@ void GLAPIENTRY ErrorHandler(GLenum source,
 class Renderer {
  public:
   void Clear() const;
-  void Draw(const VertexArray &, const IndexBuffer &, const Shader &) const;
+  void Draw(const VertexArray &, const IndexBuffer &, const Shader &, bool = false) const;
  private:
 
 };
