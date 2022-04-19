@@ -12,7 +12,7 @@ class LightSource {
  public:
   LightSource();
   explicit LightSource(glm::vec3);
-  LightSource(glm::vec3, glm::vec4);
+  [[maybe_unused]] LightSource(glm::vec3, glm::vec4);
   glm::vec3 &Position() { return m_position; }
   glm::vec4 &Color() { return m_color; }
  private:

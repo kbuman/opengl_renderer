@@ -24,10 +24,16 @@ void GLAPIENTRY ErrorHandler(GLenum source,
 
 class Renderer {
  public:
+  Renderer();
   void Clear() const;
-  void Draw(const VertexArray &, const IndexBuffer &, const Shader &, bool = false) const;
+  void ClearColor() const;
+  void ClearDepth() const;
+  void enableProperty(unsigned int) const;
+  void disableProperty(unsigned int) const;
+  void Draw(const VArray &, const IBuffer &, const Shader &, bool = false) const;
+  glm::vec4& ClearColor();
  private:
-
+  glm::vec4 m_clearColor{0.0f, 0.0f, 0.0f, 1.0f};
 };
 
 #endif //OPENGL_CPP_RENDERER_RENDERER_H_

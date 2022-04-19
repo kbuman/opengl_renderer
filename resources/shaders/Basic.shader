@@ -6,13 +6,14 @@ layout(location = 1) in vec4 vertexColor;
 layout(location = 2) in vec2 texCoord;
 layout(location = 3) in vec3 aNormal;
 
+
+uniform mat4 camera;
+uniform mat4 model;
+
 out vec2 v_TexCoord;
 out vec3 currentPosition;
 out vec3 normal;
 out vec4 pixelColor;
-
-uniform mat4 camera;
-uniform mat4 model;
 
 void main()
 {
@@ -21,7 +22,7 @@ void main()
    v_TexCoord = texCoord;
    normal = normalize(vec3(model*vec4(aNormal,1.0f)));
    pixelColor = vertexColor;
-};
+}
 
 #shader fragment
 #version 410 core
@@ -34,7 +35,7 @@ in vec3 normal;
 in vec4 pixelColor;
 
 uniform vec4 u_color;
-uniform sampler2D diffuseTexture;
+//uniform sampler2D diffuseTexture;
 uniform vec3 lightPosition;
 uniform vec4 lightColor;
 uniform vec3 cameraPosition;
@@ -57,4 +58,4 @@ void main()
    vec4 texColor = pixelColor * lightColor * (diffuse+ambient+specular);
 //    vec4 texColor = texture(diffuseTexture, v_TexCoord) * lightColor * (diffuse+ambient+specular);
    FragColor = texColor;
-};
+}

@@ -10,17 +10,17 @@
 
 #include "../renderer/renderer.h"
 
-Shader::Shader(std::string fp) : m_filePath(std::move(fp)), m_rendererID(0) {
+Shader::Shader(std::string fp) : m_filePath(std::move(fp)), m_programID(0) {
   ShaderProgramSource source = ParseShader(m_filePath);
-  m_rendererID = CreateShader(source.VertexSource, source.FragmentSource);
+  m_programID = CreateShader(source.VertexSource, source.FragmentSource);
 }
 
 Shader::~Shader() {
-  glDeleteProgram(m_rendererID);
+  glDeleteProgram(m_programID);
 }
 
 void Shader::Bind() const {
-  glUseProgram(m_rendererID);
+  glUseProgram(m_programID);
 }
 
 void Shader::Unbind() const {
@@ -28,7 +28,6 @@ void Shader::Unbind() const {
 }
 
 void Shader::SetUniform4f(const std::string &name, float v0, float v1, float v2, float v3) {
-
   glUniform4f(GetUniformLocation(name), v0, v1, v2, v3);
 }
 
@@ -36,7 +35,7 @@ int Shader::GetUniformLocation(const std::string &name) {
   if (m_uniformLocationCache.find(name)!=m_uniformLocationCache.end())
     return m_uniformLocationCache[name];
 
-  auto location = glGetUniformLocation(m_rendererID, name.c_str());
+  auto location = glGetUniformLocation(m_programID, name.c_str());
   if (location==-1)
     std::cout << "Invalid name '" << name << "'" << std::endl;
 
@@ -85,7 +84,9 @@ unsigned int Shader::CompileShader(unsigned int type, const std::string &source)
     glGetShaderiv(id, GL_INFO_LOG_LENGTH, &length);
     auto msg = (char *) alloca(length*sizeof(char));
     glGetShaderInfoLog(id, length, &length, msg);
-    std::cout << "Failed to compile " << (type==GL_VERTEX_SHADER ? "vertex" : "fragment") << " shader" << std::endl;
+    std::cout << "Failed to compile " << (type==GL_VERTEX_SHADER ? "vertex" : "fragment") << " shader: " << source
+              << "."
+              << std::endl;
     std::cout << msg << std::endl;
     glDeleteShader(id);
     return 0;
@@ -113,7 +114,7 @@ unsigned int Shader::CreateShader(const std::string &vertexShader, const std::st
 }
 
 void Shader::SetUniform1i(const std::string &name, int value) {
-  glUniform1f(GetUniformLocation(name), value);
+  glUniform1i(GetUniformLocation(name), value);
 }
 
 void Shader::SetUniform1f(const std::string &name, float value) {
@@ -131,6 +132,7 @@ void Shader::SetUniform3f(const std::string &name, float x, float y, float z) {
 void Shader::SetUniformVec3(const std::string &name, glm::vec3 &vec) {
   SetUniform3f(name, vec[0], vec[1], vec[2]);
 }
+
 void Shader::SetUniformVec4(const std::string &name, glm::vec4 &vec) {
   SetUniform4f(name, vec[0], vec[1], vec[2], vec[3]);
 }

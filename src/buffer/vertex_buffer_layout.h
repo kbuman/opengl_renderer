@@ -8,33 +8,33 @@
 #include <vector>
 #include <GL/glew.h>
 
-struct VertexBufferLayoutElement {
+struct VBLElement {
   unsigned int type;
   unsigned int count;
   unsigned char normalized;
 
-  static unsigned int SizeOfType(unsigned int type) {
+  static unsigned int TypeSize(unsigned int type) {
     switch (type) {
-      case GL_FLOAT: return 4;
+      case GL_FLOAT:
       case GL_UNSIGNED_INT: return 4;
       case GL_UNSIGNED_BYTE: return 1;
+      default: return 0;
     }
-    return 0;
   }
 };
 
-class VertexBufferLayout {
+class VBLayout {
  public:
-  VertexBufferLayout() : m_stride(0) {};
+  VBLayout() : m_stride(0) {};
 
   template<typename T>
   void Push(unsigned int count);
 
-  [[nodiscard]] std::vector<VertexBufferLayoutElement> Elements() const { return m_elements; }
+  [[nodiscard]] std::vector<VBLElement> Elements() const { return m_elements; }
   [[nodiscard]] unsigned int Stride() const { return m_stride; }
 
  private:
-  std::vector<VertexBufferLayoutElement> m_elements;
+  std::vector<VBLElement> m_elements;
   unsigned int m_stride;
 };
 

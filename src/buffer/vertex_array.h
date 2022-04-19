@@ -8,15 +8,15 @@
 #include "vertex_buffer.h"
 #include "vertex_buffer_layout.h"
 
-class VertexArray {
+class VArray {
  public:
-  VertexArray();
-  ~VertexArray();
-  void AddBuffer(const VertexBuffer &, const VertexBufferLayout &);
+  VArray();
+  ~VArray();
+  void AddBuffer(const VBuffer &, const VBLayout &);
   void Bind() const;
   void Unbind() const;
  private:
-  unsigned int m_rendererID;
+  unsigned int m_programID;
 };
 
 #endif //OPENGL_CPP_SRC_BUFFER_VERTEX_ARRAY_H_

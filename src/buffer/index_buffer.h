@@ -5,17 +5,16 @@
 #ifndef OPENGL_CPP_BUFFER_INDEX_BUFFER_H_
 #define OPENGL_CPP_BUFFER_INDEX_BUFFER_H_
 
-class IndexBuffer {
+class IBuffer {
  public:
-  IndexBuffer(const unsigned int *, unsigned int, bool = true);
-  ~IndexBuffer();
+  IBuffer(const unsigned int *, unsigned int, bool = true);
+  ~IBuffer();
 
   void Bind() const;
   void Unbind() const;
   [[nodiscard]] unsigned int Count() const { return m_count; }
-  void ReplaceData(const unsigned int *, unsigned int);
  private:
-  unsigned int m_rendererID;
+  unsigned int m_programID;
   const unsigned int *m_data;
   unsigned int m_count;
   bool m_static;

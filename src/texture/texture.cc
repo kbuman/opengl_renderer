@@ -45,6 +45,16 @@ void Texture::Unbind() const {
   glBindTexture(GL_TEXTURE_2D, 0);
 }
 
+//Texture::Texture(const unsigned int width, const unsigned int height)
+//    : m_programID(0),
+//      m_localBuffer(nullptr),
+//      m_width(width),
+//      m_height(height),
+//      m_bytesPerPixel(0),
+//      m_textureType(TextureType::NONE) {
+//
+//}
+
 Texture::Texture(std::string path, bool generateMIP)
     : m_rendererID(0),
       m_filePath(std::move(path)),

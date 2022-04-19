@@ -4,15 +4,15 @@
 
 #include "vertex_array.h"
 
-VertexArray::VertexArray() {
-  glGenVertexArrays(1, &m_rendererID);
+VArray::VArray() : m_programID(0) {
+  glGenVertexArrays(1, &m_programID);
 }
 
-VertexArray::~VertexArray() {
-  glDeleteVertexArrays(1, &m_rendererID);
+VArray::~VArray() {
+  glDeleteVertexArrays(1, &m_programID);
 }
 
-void VertexArray::AddBuffer(const VertexBuffer &vb, const VertexBufferLayout &layout) {
+void VArray::AddBuffer(const VBuffer &vb, const VBLayout &layout) {
   Bind();
   vb.Bind();
   const auto &elements = layout.Elements();
@@ -20,16 +20,16 @@ void VertexArray::AddBuffer(const VertexBuffer &vb, const VertexBufferLayout &la
   for (unsigned int i = 0; i < elements.size(); ++i) {
     const auto &element = elements[i];
     glEnableVertexAttribArray(i);
-    glVertexAttribPointer(i, element.count, element.type, element.normalized, layout.Stride(),
+    glVertexAttribPointer(i, (GLint) element.count, element.type, element.normalized, (GLsizei) layout.Stride(),
                           reinterpret_cast<const void *>(offset));
-    offset += element.count*VertexBufferLayoutElement::SizeOfType(element.type);
+    offset += element.count*VBLElement::TypeSize(element.type);
   }
 }
 
-void VertexArray::Bind() const {
-  glBindVertexArray(m_rendererID);
+void VArray::Bind() const {
+  glBindVertexArray(m_programID);
 }
 
-void VertexArray::Unbind() const {
+void VArray::Unbind() const {
   glBindVertexArray(0);
 }

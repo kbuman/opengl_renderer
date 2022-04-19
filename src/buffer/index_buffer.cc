@@ -6,32 +6,25 @@
 
 #include "../renderer/renderer.h"
 
-IndexBuffer::IndexBuffer(const unsigned int *data, unsigned int count, bool staticIB)
-    : m_data(data), m_count(count), m_static(staticIB) {
+IBuffer::IBuffer(const unsigned int *data, unsigned int count, bool staticIB)
+    : m_programID(0), m_data(data), m_count(count), m_static(staticIB) {
   static_assert(sizeof(unsigned int)==sizeof(GLuint));
-  glGenBuffers(1, &m_rendererID);
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_rendererID);
+  glGenBuffers(1, &m_programID);
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_programID);
   if (m_static)
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, count*sizeof(unsigned int), data, GL_STATIC_DRAW);
   else
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, count*sizeof(unsigned int), data, GL_DYNAMIC_DRAW);
 }
 
-IndexBuffer::~IndexBuffer() {
-  glDeleteBuffers(1, &m_rendererID);
+IBuffer::~IBuffer() {
+  glDeleteBuffers(1, &m_programID);
 }
 
-void IndexBuffer::Bind() const {
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_rendererID);
+void IBuffer::Bind() const {
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_programID);
 }
 
-void IndexBuffer::Unbind() const {
+void IBuffer::Unbind() const {
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-}
-
-void IndexBuffer::ReplaceData(const unsigned int *data, unsigned int count) {
-  if (m_static)
-    return;
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_rendererID);
-  glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, count*sizeof(unsigned int), data);
 }

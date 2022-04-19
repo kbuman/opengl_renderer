@@ -6,12 +6,13 @@
 #define OPENGL_CPP_TEXTURE_H_
 
 enum class TextureType {
-  DIFFUSE = 0, SPECULAR = 1, NORMAL = 2
+  NONE = 0, DIFFUSE = 1, SPECULAR = 2, NORMAL = 3
 };
 
 class Texture {
  public:
   explicit Texture(std::string);
+//  Texture(const unsigned int,const unsigned int);
   Texture(std::string, bool);
   Texture(std::string, TextureType, bool);
   ~Texture();
