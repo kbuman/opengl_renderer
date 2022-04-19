@@ -3,3 +3,5 @@ build/*
 CMakeLists.txt
 
 .idea
+
+imgui.ini

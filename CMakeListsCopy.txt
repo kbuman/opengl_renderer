@@ -1,0 +1,76 @@
+cmake_minimum_required(VERSION 3.20)
+project(opengl_cpp)
+
+set(CMAKE_CXX_STANDARD 20)
+
+set(GLM_INCLUDE <path_to_glm_root_dir>)
+set(SDL_INCLUDE <path_to_sdl2_include_dir>)
+set(GLFW_INCLUDE <path_to_glfw_include_dir>)
+set(GLEW_INCLUDE <path_to_glew_include_dir>)
+
+set(GLFW_LIB <path_to_libglfw3.a>)
+set(GLEW_LIB <path_to_glew32.lib>)
+set(OPENGL_DLL <path_to_opengl32.dll>)
+set(GLEW_DLL <path_to_glew32.dll>)
+
+file(GLOB SRC_FILES ${PROJECT_SOURCE_DIR}/src/*.cc
+        ${PROJECT_SOURCE_DIR}/src/*.h
+        ${PROJECT_SOURCE_DIR}/src/common/*.h
+        ${PROJECT_SOURCE_DIR}/src/common/*.cc
+        ${PROJECT_SOURCE_DIR}/src/vendor/stb/stb_image.h
+        ${PROJECT_SOURCE_DIR}/src/vendor/stb/stb_image.cc
+        ${PROJECT_SOURCE_DIR}/src/vendor/imgui/imconfig.h
+        ${PROJECT_SOURCE_DIR}/src/vendor/imgui/imgui.cpp
+        ${PROJECT_SOURCE_DIR}/src/vendor/imgui/imgui.h
+        ${PROJECT_SOURCE_DIR}/src/vendor/imgui/imgui_demo.cpp
+        ${PROJECT_SOURCE_DIR}/src/vendor/imgui/imgui_draw.cpp
+        ${PROJECT_SOURCE_DIR}/src/vendor/imgui/imgui_internal.h
+        ${PROJECT_SOURCE_DIR}/src/vendor/imgui/imgui_tables.cpp
+        ${PROJECT_SOURCE_DIR}/src/vendor/imgui/imgui_widgets.cpp
+        ${PROJECT_SOURCE_DIR}/src/vendor/imgui/imstb_rectpack.h
+        ${PROJECT_SOURCE_DIR}/src/vendor/imgui/imstb_textedit.h
+        ${PROJECT_SOURCE_DIR}/src/vendor/imgui/imstb_truetype.h
+        ${PROJECT_SOURCE_DIR}/src/vendor/imgui/imgui_impl_glfw.cpp
+        ${PROJECT_SOURCE_DIR}/src/vendor/imgui/imgui_impl_glfw.h
+        ${PROJECT_SOURCE_DIR}/src/vendor/imgui/imgui_impl_opengl3.cpp
+        ${PROJECT_SOURCE_DIR}/src/vendor/imgui/imgui_impl_opengl3.h
+        ${PROJECT_SOURCE_DIR}/src/vendor/imgui/imgui_impl_opengl3_loader.h
+        ${PROJECT_SOURCE_DIR}/src/renderer/renderer.h
+        ${PROJECT_SOURCE_DIR}/src/renderer/renderer.cc
+        ${PROJECT_SOURCE_DIR}/src/buffer/vertex_buffer.h
+        ${PROJECT_SOURCE_DIR}/src/buffer/vertex_buffer.cc
+        ${PROJECT_SOURCE_DIR}/src/buffer/index_buffer.h
+        ${PROJECT_SOURCE_DIR}/src/buffer/index_buffer.cc
+        ${PROJECT_SOURCE_DIR}/src/buffer/vertex_array.h
+        ${PROJECT_SOURCE_DIR}/src/buffer/vertex_array.cc
+        ${PROJECT_SOURCE_DIR}/src/buffer/vertex_buffer_layout.h
+        ${PROJECT_SOURCE_DIR}/src/buffer/vertex_buffer_layout.cc
+        ${PROJECT_SOURCE_DIR}/src/shader/shader.h
+        ${PROJECT_SOURCE_DIR}/src/shader/shader.cc
+        ${PROJECT_SOURCE_DIR}/src/texture/texture.h
+        ${PROJECT_SOURCE_DIR}/src/texture/texture.cc
+        ${PROJECT_SOURCE_DIR}/src/lights/light_source.h
+        ${PROJECT_SOURCE_DIR}/src/lights/light_source.cc
+        ${PROJECT_SOURCE_DIR}/src/buffer/frame_buffer.h
+        ${PROJECT_SOURCE_DIR}/src/buffer/frame_buffer.cc
+        )
+
+add_executable(opengl_cpp ${SRC_FILES})
+
+if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    set(CMAKE_CXX_FLAGS "-lopengl32 -lglu32")
+endif ()
+
+set(FILES_TO_COPY ${GLEW_DLL})
+
+foreach (file_i ${FILES_TO_COPY})
+    add_custom_command(
+            TARGET opengl_cpp
+            POST_BUILD
+            COMMAND ${CMAKE_COMMAND}
+            ARGS -E copy ${file_i} $<TARGET_FILE_DIR:opengl_cpp>
+    )
+endforeach (file_i)
+
+target_include_directories(opengl_cpp PRIVATE ${SDL_INCLUDE} ${GLM_INCLUDE} ${GLFW_INCLUDE} ${GLEW_INCLUDE})
+target_link_libraries(opengl_cpp PRIVATE ${GLFW_LIB} ${GLEW_LIB} ${OPENGL_DLL})
